@@ -1,0 +1,51 @@
+version: '3.8'
+
+services:
+  api-gateway:
+    build:
+      context: ./backend/api-gateway
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    depends_on:
+      - device-service
+      - scene-service
+    networks:
+      - xiyuan-network
+
+  device-service:
+    build:
+      context: ./backend/device-service
+      dockerfile: Dockerfile
+    ports:
+      - "8081:8081"
+    networks:
+      - xiyuan-network
+
+  scene-service:
+    build:
+      context: ./backend/scene-service
+      dockerfile: Dockerfile
+    ports:
+      - "8082:8082"
+    environment:
+      - DEVICE_SERVICE_URL=http://device-service:8081
+    depends_on:
+      - device-service
+    networks:
+      - xiyuan-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:80"
+    depends_on:
+      - api-gateway
+    networks:
+      - xiyuan-network
+
+networks:
+  xiyuan-network:
+    driver: bridge
