@@ -1,0 +1,28 @@
+{
+  "name": "xiyuan-iot-frontend",
+  "version": "1.0.0",
+  "description": "Low-code IoT Platform Frontend",
+  "scripts": {
+    "serve": "vue-cli-service serve",
+    "build": "vue-cli-service build",
+    "lint": "vue-cli-service lint"
+  },
+  "dependencies": {
+    "vue": "^3.3.4",
+    "vue-router": "^4.2.4",
+    "axios": "^1.5.0",
+    "element-plus": "^2.3.14",
+    "@element-plus/icons-vue": "^2.1.0",
+    "pinia": "^2.1.6",
+    "@vueflow/core": "^1.26.0",
+    "@vueflow/background": "^1.3.0",
+    "@vueflow/controls": "^1.1.1",
+    "@vueflow/minimap": "^1.4.0"
+  },
+  "devDependencies": {
+    "@vue/cli-service": "^5.0.8",
+    "@vue/cli-plugin-router": "^5.0.8",
+    "@vue/cli-plugin-babel": "^5.0.8",
+    "@vue/compiler-sfc": "^3.3.4"
+  }
+}
