@@ -53,7 +53,11 @@
                 @dragstart="onDeviceDragStart(device)"
               >
                 <el-icon><Monitor /></el-icon>
-                <span>{{ device.name }}</span>
+                <div class="device-info">
+                  <span class="device-name">{{ device.name }}</span>
+                  <span class="device-location">{{ device.room || device.location }}</span>
+                  <el-tag size="small" :type="getStatusType(device.status)">{{ device.status }}</el-tag>
+                </div>
               </div>
             </div>
           </el-card>
@@ -252,14 +256,30 @@ const scene = ref({
   actions: []
 })
 
-const loadDevices = async () => {
+const loadDevices = async (retryCount = 0) => {
   try {
     const response = await deviceService.getAll()
     devices.value = response.data
   } catch (error) {
     console.error('Failed to load devices:', error)
-    ElMessage.error('加载设备列表失败')
+    if (retryCount < 3) {
+      const delay = Math.pow(2, retryCount) * 1000
+      console.log(`Retrying in ${delay}ms...`)
+      setTimeout(() => loadDevices(retryCount + 1), delay)
+    } else {
+      ElMessage.error('加载设备列表失败，请刷新页面重试')
+    }
   }
+}
+
+const getStatusType = (status) => {
+  const types = {
+    ONLINE: 'success',
+    OFFLINE: 'info',
+    ERROR: 'danger',
+    DISABLED: 'warning'
+  }
+  return types[status] || 'info'
 }
 
 const addTrigger = () => {
@@ -319,6 +339,10 @@ const saveScene = async () => {
   try {
     const sceneData = {
       ...scene.value,
+      triggers: scene.value.triggers.map(trigger => ({
+        ...trigger,
+        parameters: trigger.parameters || {}
+      })),
       actions: scene.value.actions.map(action => {
         const actionData = { ...action }
         
@@ -330,7 +354,10 @@ const saveScene = async () => {
             )
           } catch (e) {
             console.error('Invalid JSON in action parameters:', e)
+            actionData.parameters = {}
           }
+        } else {
+          actionData.parameters = {}
         }
         
         delete actionData.parametersText
@@ -343,7 +370,7 @@ const saveScene = async () => {
     router.push('/scenes')
   } catch (error) {
     console.error('Failed to save scene:', error)
-    ElMessage.error('保存场景失败')
+    ElMessage.error('保存场景失败: ' + (error.response?.data?.message || error.message))
   }
 }
 
@@ -391,6 +418,23 @@ onMounted(() => {
 
 .device-item:hover {
   background: #e0e0e0;
+}
+
+.device-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.device-name {
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.device-location {
+  font-size: 12px;
+  color: #666;
 }
 
 .designer-canvas {

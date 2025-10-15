@@ -84,14 +84,20 @@ const getStatusText = (status) => {
   return texts[status] || status
 }
 
-const loadScenes = async () => {
+const loadScenes = async (retryCount = 0) => {
   loading.value = true
   try {
     const response = await sceneService.getAll()
     scenes.value = response.data
   } catch (error) {
     console.error('Failed to load scenes:', error)
-    ElMessage.error('加载场景列表失败')
+    if (retryCount < 3) {
+      const delay = Math.pow(2, retryCount) * 1000
+      console.log(`Retrying in ${delay}ms...`)
+      setTimeout(() => loadScenes(retryCount + 1), delay)
+    } else {
+      ElMessage.error('加载场景列表失败，请刷新页面重试')
+    }
   } finally {
     loading.value = false
   }

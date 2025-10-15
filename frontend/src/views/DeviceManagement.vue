@@ -22,10 +22,13 @@
             <el-tag :type="getStatusType(row.status)">{{ row.status }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" fixed="right" width="280">
+        <el-table-column label="操作" fixed="right" width="340">
           <template #default="{ row }">
             <el-button size="small" @click="viewDeviceState(row)">
               查看状态
+            </el-button>
+            <el-button size="small" @click="editDevice(row)">
+              编辑
             </el-button>
             <el-button size="small" type="primary" @click="controlDevice(row)">
               控制
@@ -88,9 +91,9 @@
         <el-descriptions-item 
           v-for="(value, key) in deviceState" 
           :key="key"
-          :label="key"
+          :label="formatLabel(key)"
         >
-          {{ value }}
+          {{ formatValue(key, value) }}
         </el-descriptions-item>
       </el-descriptions>
     </el-dialog>
@@ -121,6 +124,36 @@
         <el-button type="primary" @click="executeControl">执行</el-button>
       </template>
     </el-dialog>
+    
+    <el-dialog v-model="showEditDialog" title="编辑设备" width="600px">
+      <el-form :model="editDeviceForm" label-width="100px">
+        <el-form-item label="设备名称">
+          <el-input v-model="editDeviceForm.name" />
+        </el-form-item>
+        <el-form-item label="教学楼">
+          <el-input v-model="editDeviceForm.building" placeholder="如：理科楼" />
+        </el-form-item>
+        <el-form-item label="楼层">
+          <el-input v-model="editDeviceForm.floor" placeholder="如：3F" />
+        </el-form-item>
+        <el-form-item label="房间">
+          <el-input v-model="editDeviceForm.room" placeholder="如：301教室" />
+        </el-form-item>
+        <el-form-item label="位置描述">
+          <el-input v-model="editDeviceForm.location" placeholder="如：前排左侧" />
+        </el-form-item>
+        <el-form-item label="状态">
+          <el-select v-model="editDeviceForm.status">
+            <el-option label="在线" value="ONLINE" />
+            <el-option label="离线" value="OFFLINE" />
+          </el-select>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="showEditDialog = false">取消</el-button>
+        <el-button type="primary" @click="saveEdit">保存</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -134,6 +167,7 @@ const devices = ref([])
 const showAddDialog = ref(false)
 const showStateDialog = ref(false)
 const showControlDialog = ref(false)
+const showEditDialog = ref(false)
 const deviceState = ref({})
 const currentDevice = ref(null)
 const controlAction = ref('turn_on')
@@ -142,6 +176,16 @@ const controlParams = ref('')
 const newDevice = ref({
   name: '',
   type: '',
+  building: '',
+  floor: '',
+  room: '',
+  location: '',
+  status: 'OFFLINE'
+})
+
+const editDeviceForm = ref({
+  id: null,
+  name: '',
   building: '',
   floor: '',
   room: '',
@@ -159,14 +203,52 @@ const getStatusType = (status) => {
   return types[status] || 'info'
 }
 
-const loadDevices = async () => {
+const formatLabel = (key) => {
+  const labels = {
+    power: '电源',
+    brightness: '亮度',
+    color: '颜色',
+    temperature: '温度',
+    mode: '模式',
+    fanSpeed: '风速',
+    humidity: '湿度',
+    motion: '运动',
+    locked: '锁定',
+    position: '位置',
+    input: '输入源',
+    speed: '速度',
+    pm25: 'PM2.5',
+    co2: 'CO2',
+    type: '类型',
+    lastUpdate: '最后更新时间'
+  }
+  return labels[key] || key
+}
+
+const formatValue = (key, value) => {
+  if (key === 'lastUpdate') {
+    return new Date(value).toLocaleString('zh-CN')
+  }
+  if (key === 'color') {
+    return value
+  }
+  return value
+}
+
+const loadDevices = async (retryCount = 0) => {
   loading.value = true
   try {
     const response = await deviceService.getAll()
     devices.value = response.data
   } catch (error) {
     console.error('Failed to load devices:', error)
-    ElMessage.error('加载设备列表失败')
+    if (retryCount < 3) {
+      const delay = Math.pow(2, retryCount) * 1000
+      console.log(`Retrying in ${delay}ms...`)
+      setTimeout(() => loadDevices(retryCount + 1), delay)
+    } else {
+      ElMessage.error('加载设备列表失败，请刷新页面重试')
+    }
   } finally {
     loading.value = false
   }
@@ -248,6 +330,31 @@ const executeControl = async () => {
   } catch (error) {
     console.error('Failed to control device:', error)
     ElMessage.error('控制设备失败')
+  }
+}
+
+const editDevice = (device) => {
+  editDeviceForm.value = {
+    id: device.id,
+    name: device.name,
+    building: device.building || '',
+    floor: device.floor || '',
+    room: device.room || '',
+    location: device.location || '',
+    status: device.status
+  }
+  showEditDialog.value = true
+}
+
+const saveEdit = async () => {
+  try {
+    await deviceService.update(editDeviceForm.value.id, editDeviceForm.value)
+    ElMessage.success('设备更新成功')
+    showEditDialog.value = false
+    loadDevices()
+  } catch (error) {
+    console.error('Failed to update device:', error)
+    ElMessage.error('更新设备失败')
   }
 }
 

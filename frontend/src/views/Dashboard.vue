@@ -133,7 +133,7 @@ const getStatusType = (status) => {
   return types[status] || 'info'
 }
 
-const loadData = async () => {
+const loadData = async (retryCount = 0) => {
   try {
     const [devicesRes, scenesRes, activeScenesRes] = await Promise.all([
       deviceService.getAll(),
@@ -151,7 +151,13 @@ const loadData = async () => {
     quickScenes.value = activeScenesRes.data.slice(0, 6)
   } catch (error) {
     console.error('Failed to load dashboard data:', error)
-    ElMessage.error('加载数据失败')
+    if (retryCount < 3) {
+      const delay = Math.pow(2, retryCount) * 1000
+      console.log(`Retrying in ${delay}ms...`)
+      setTimeout(() => loadData(retryCount + 1), delay)
+    } else {
+      ElMessage.error('加载数据失败，请刷新页面重试')
+    }
   }
 }
 

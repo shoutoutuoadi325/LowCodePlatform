@@ -7,6 +7,8 @@ services:
       - "8081:8081"
     environment:
       - SPRING_PROFILES_ACTIVE=prod
+    volumes:
+      - device-data:/data
     networks:
       - iot-network
     restart: unless-stopped
@@ -20,6 +22,8 @@ services:
     environment:
       - SPRING_PROFILES_ACTIVE=prod
       - DEVICE_SERVICE_URL=http://device-service:8081
+    volumes:
+      - scene-data:/data
     depends_on:
       - device-service
     networks:
@@ -42,3 +46,7 @@ services:
 networks:
   iot-network:
     driver: bridge
+
+volumes:
+  device-data:
+  scene-data:
