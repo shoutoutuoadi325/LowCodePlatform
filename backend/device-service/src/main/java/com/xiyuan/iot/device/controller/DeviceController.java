@@ -65,7 +65,7 @@ public class DeviceController {
     }
     
     @GetMapping("/{deviceId}/state")
-    public ResponseEntity<Map<String, Object>> getDeviceState(@PathVariable String deviceId) {
+    public ResponseEntity<Map<String, String>> getDeviceState(@PathVariable String deviceId) {
         return ResponseEntity.ok(deviceService.getDeviceState(deviceId));
     }
     

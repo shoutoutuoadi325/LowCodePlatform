@@ -21,6 +21,15 @@ spring:
       enabled: true
       path: /h2-console
 
+# MQTT配置
+mqtt:
+  broker:
+    url: tcp://mosquitto:1883
+  client:
+    id: iot-platform
+  username: 
+  password: 
+
 eureka:
   client:
     enabled: false
@@ -32,3 +41,4 @@ eureka:
 logging:
   level:
     com.xiyuan.iot: DEBUG
+    org.springframework.integration: INFO

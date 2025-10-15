@@ -1,0 +1,16 @@
+server:
+  port: 9090
+
+spring:
+  application:
+    name: device-simulator
+
+# MQTT配置
+mqtt:
+  broker:
+    url: tcp://localhost:1883
+
+logging:
+  level:
+    com.xiyuan.iot.simulator: INFO
+    root: INFO

@@ -2,8 +2,8 @@ package com.xiyuan.iot.device.service;
 
 import com.xiyuan.iot.device.model.Device;
 import com.xiyuan.iot.device.model.DeviceStatus;
+import com.xiyuan.iot.device.mqtt.MqttGatewayService;
 import com.xiyuan.iot.device.repository.DeviceRepository;
-import com.xiyuan.iot.device.simulator.SimulatedDeviceManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -19,7 +19,7 @@ import java.util.UUID;
 public class DeviceService {
     
     private final DeviceRepository deviceRepository;
-    private final SimulatedDeviceManager deviceSimulator;
+    private final MqttGatewayService mqttGatewayService;
     
     @Transactional
     public Device createDevice(Device device) {
@@ -32,7 +32,6 @@ public class DeviceService {
         }
         
         Device savedDevice = deviceRepository.save(device);
-        deviceSimulator.initializeDevice(savedDevice.getDeviceId(), savedDevice.getType());
         log.info("Created device: {}", savedDevice.getDeviceId());
         
         return savedDevice;
@@ -72,6 +71,9 @@ public class DeviceService {
         deviceRepository.deleteById(id);
     }
     
+    /**
+     * 控制设备 - 通过MQTT发送命令
+     */
     public boolean controlDevice(String deviceId, String action, Map<String, Object> parameters) {
         Device device = getDeviceByDeviceId(deviceId);
         
@@ -80,24 +82,16 @@ public class DeviceService {
             return false;
         }
         
-        switch (action.toLowerCase()) {
-            case "on":
-            case "turn_on":
-                return deviceSimulator.turnOn(deviceId);
-            case "off":
-            case "turn_off":
-                return deviceSimulator.turnOff(deviceId);
-            case "set_state":
-                return deviceSimulator.setState(deviceId, parameters);
-            default:
-                log.warn("Unknown action: {}", action);
-                return false;
-        }
+        // 通过MQTT发送命令到设备
+        return mqttGatewayService.sendCommand(deviceId, action, parameters);
     }
     
-    public Map<String, Object> getDeviceState(String deviceId) {
-        getDeviceByDeviceId(deviceId);
-        return deviceSimulator.getState(deviceId);
+    /**
+     * 获取设备状态 - 从数据库读取最新上报的属性
+     */
+    public Map<String, String> getDeviceState(String deviceId) {
+        Device device = getDeviceByDeviceId(deviceId);
+        return device.getProperties();
     }
     
     public List<Device> getDevicesByLocation(String building, String floor) {
