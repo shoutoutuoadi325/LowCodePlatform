@@ -33,5 +33,6 @@ public class Trigger {
                      joinColumns = @JoinColumn(name = "trigger_id"))
     @MapKeyColumn(name = "param_key")
     @Column(name = "param_value")
+    @Builder.Default
     private Map<String, String> parameters = new HashMap<>();
 }

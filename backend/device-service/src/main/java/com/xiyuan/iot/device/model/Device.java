@@ -49,6 +49,7 @@ public class Device {
                      joinColumns = @JoinColumn(name = "device_id"))
     @MapKeyColumn(name = "property_key")
     @Column(name = "property_value")
+    @Builder.Default
     private Map<String, String> properties = new HashMap<>();
     
     @Column(nullable = false, updatable = false)

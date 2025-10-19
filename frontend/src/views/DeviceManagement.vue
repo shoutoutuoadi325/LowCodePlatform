@@ -22,12 +22,16 @@
             <el-tag :type="getStatusType(row.status)">{{ row.status }}</el-tag>
           </template>
         </el-table-column>
+        <el-table-column prop="updatedAt" label="最后更新" width="180" />
         <el-table-column label="操作" fixed="right" width="280">
           <template #default="{ row }">
             <el-button size="small" @click="viewDeviceState(row)">
               查看状态
             </el-button>
-            <el-button size="small" type="primary" @click="controlDevice(row)">
+            <el-button size="small" type="primary" @click="editDevice(row)">
+              编辑
+            </el-button>
+            <el-button size="small" type="success" @click="controlDevice(row)">
               控制
             </el-button>
             <el-button size="small" type="danger" @click="deleteDevice(row)">
@@ -107,18 +111,57 @@
             <el-radio label="set_state">设置状态</el-radio>
           </el-radio-group>
         </el-form-item>
-        <el-form-item v-if="controlAction === 'set_state'" label="参数">
-          <el-input
-            v-model="controlParams"
-            type="textarea"
-            :rows="3"
-            placeholder='输入JSON格式，如：{"brightness": 80, "color": "#FF0000"}'
-          />
-        </el-form-item>
+        <template v-if="controlAction === 'set_state'">
+          <el-form-item v-if="currentDevice?.type === 'LIGHT'" label="亮度">
+            <el-slider v-model="lightBrightness" :min="0" :max="100" />
+          </el-form-item>
+          <el-form-item v-if="currentDevice?.type === 'LIGHT'" label="颜色">
+            <el-color-picker v-model="lightColor" />
+          </el-form-item>
+          <el-form-item v-if="currentDevice?.type !== 'LIGHT'" label="参数">
+            <el-input
+              v-model="controlParams"
+              type="textarea"
+              :rows="3"
+              placeholder='输入JSON格式，如：{"temperature": 22}'
+            />
+          </el-form-item>
+        </template>
       </el-form>
       <template #footer>
         <el-button @click="showControlDialog = false">取消</el-button>
         <el-button type="primary" @click="executeControl">执行</el-button>
+      </template>
+    </el-dialog>
+    
+    <el-dialog v-model="showEditDialog" title="编辑设备" width="600px">
+      <el-form :model="editingDevice" label-width="100px">
+        <el-form-item label="设备名称">
+          <el-input v-model="editingDevice.name" />
+        </el-form-item>
+        <el-form-item label="教学楼">
+          <el-input v-model="editingDevice.building" placeholder="如：理科楼" />
+        </el-form-item>
+        <el-form-item label="楼层">
+          <el-input v-model="editingDevice.floor" placeholder="如：3F" />
+        </el-form-item>
+        <el-form-item label="房间">
+          <el-input v-model="editingDevice.room" placeholder="如：301教室" />
+        </el-form-item>
+        <el-form-item label="位置描述">
+          <el-input v-model="editingDevice.location" placeholder="如：前排左侧" />
+        </el-form-item>
+        <el-form-item label="状态">
+          <el-select v-model="editingDevice.status">
+            <el-option label="在线" value="ONLINE" />
+            <el-option label="离线" value="OFFLINE" />
+            <el-option label="禁用" value="DISABLED" />
+          </el-select>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="showEditDialog = false">取消</el-button>
+        <el-button type="primary" @click="saveEdit">保存</el-button>
       </template>
     </el-dialog>
   </div>
@@ -134,10 +177,23 @@ const devices = ref([])
 const showAddDialog = ref(false)
 const showStateDialog = ref(false)
 const showControlDialog = ref(false)
+const showEditDialog = ref(false)
 const deviceState = ref({})
 const currentDevice = ref(null)
 const controlAction = ref('turn_on')
 const controlParams = ref('')
+const lightBrightness = ref(100)
+const lightColor = ref('#FFFFFF')
+
+const editingDevice = ref({
+  id: null,
+  name: '',
+  building: '',
+  floor: '',
+  room: '',
+  location: '',
+  status: 'OFFLINE'
+})
 
 const newDevice = ref({
   name: '',
@@ -227,14 +283,51 @@ const controlDevice = (device) => {
   currentDevice.value = device
   controlAction.value = 'turn_on'
   controlParams.value = ''
+  lightBrightness.value = 100
+  lightColor.value = '#FFFFFF'
   showControlDialog.value = true
+}
+
+const editDevice = (device) => {
+  editingDevice.value = {
+    id: device.id,
+    name: device.name,
+    building: device.building || '',
+    floor: device.floor || '',
+    room: device.room || '',
+    location: device.location || '',
+    status: device.status,
+    type: device.type,
+    deviceId: device.deviceId,
+    properties: device.properties
+  }
+  showEditDialog.value = true
+}
+
+const saveEdit = async () => {
+  try {
+    await deviceService.update(editingDevice.value.id, editingDevice.value)
+    ElMessage.success('设备更新成功')
+    showEditDialog.value = false
+    loadDevices()
+  } catch (error) {
+    console.error('Failed to update device:', error)
+    ElMessage.error('更新设备失败')
+  }
 }
 
 const executeControl = async () => {
   try {
     let parameters = {}
-    if (controlAction.value === 'set_state' && controlParams.value) {
-      parameters = JSON.parse(controlParams.value)
+    if (controlAction.value === 'set_state') {
+      if (currentDevice.value?.type === 'LIGHT') {
+        parameters = {
+          brightness: lightBrightness.value,
+          color: lightColor.value
+        }
+      } else if (controlParams.value) {
+        parameters = JSON.parse(controlParams.value)
+      }
     }
     
     await deviceService.control(
@@ -245,6 +338,11 @@ const executeControl = async () => {
     
     ElMessage.success('控制命令执行成功')
     showControlDialog.value = false
+    
+    // Refresh device state if state dialog is open
+    if (showStateDialog.value) {
+      viewDeviceState(currentDevice.value)
+    }
   } catch (error) {
     console.error('Failed to control device:', error)
     ElMessage.error('控制设备失败')

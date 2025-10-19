@@ -4,6 +4,8 @@ import com.xiyuan.iot.device.model.DeviceType;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -13,13 +15,18 @@ import java.util.concurrent.ConcurrentHashMap;
 public class SimulatedDeviceManager implements DeviceSimulator {
     
     private final Map<String, Map<String, Object>> deviceStates = new ConcurrentHashMap<>();
+    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    
+    private String getCurrentTimestamp() {
+        return LocalDateTime.now().format(FORMATTER);
+    }
     
     @Override
     public boolean turnOn(String deviceId) {
         log.info("Turning ON device: {}", deviceId);
         Map<String, Object> state = deviceStates.computeIfAbsent(deviceId, k -> new HashMap<>());
         state.put("power", "on");
-        state.put("lastUpdate", System.currentTimeMillis());
+        state.put("lastUpdate", getCurrentTimestamp());
         return true;
     }
     
@@ -28,7 +35,7 @@ public class SimulatedDeviceManager implements DeviceSimulator {
         log.info("Turning OFF device: {}", deviceId);
         Map<String, Object> state = deviceStates.computeIfAbsent(deviceId, k -> new HashMap<>());
         state.put("power", "off");
-        state.put("lastUpdate", System.currentTimeMillis());
+        state.put("lastUpdate", getCurrentTimestamp());
         return true;
     }
     
@@ -42,7 +49,7 @@ public class SimulatedDeviceManager implements DeviceSimulator {
         log.info("Setting state for device {}: {}", deviceId, state);
         Map<String, Object> currentState = deviceStates.computeIfAbsent(deviceId, k -> new HashMap<>());
         currentState.putAll(state);
-        currentState.put("lastUpdate", System.currentTimeMillis());
+        currentState.put("lastUpdate", getCurrentTimestamp());
         return true;
     }
     
@@ -60,7 +67,7 @@ public class SimulatedDeviceManager implements DeviceSimulator {
         Map<String, Object> initialState = new HashMap<>();
         initialState.put("power", "off");
         initialState.put("type", type.name());
-        initialState.put("lastUpdate", System.currentTimeMillis());
+        initialState.put("lastUpdate", getCurrentTimestamp());
         
         switch (type) {
             case LIGHT:

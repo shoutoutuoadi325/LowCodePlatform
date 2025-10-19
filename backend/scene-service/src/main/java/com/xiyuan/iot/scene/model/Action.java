@@ -31,9 +31,11 @@ public class Action {
                      joinColumns = @JoinColumn(name = "action_id"))
     @MapKeyColumn(name = "param_key")
     @Column(name = "param_value")
+    @Builder.Default
     private Map<String, String> parameters = new HashMap<>();
     
     private Integer delaySeconds;
     
+    @Column(name = "action_order")
     private Integer order;
 }

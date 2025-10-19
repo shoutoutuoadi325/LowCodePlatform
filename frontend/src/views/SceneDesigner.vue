@@ -52,8 +52,24 @@
                 draggable="true"
                 @dragstart="onDeviceDragStart(device)"
               >
-                <el-icon><Monitor /></el-icon>
-                <span>{{ device.name }}</span>
+                <div class="device-info">
+                  <div class="device-name">
+                    <el-icon><Monitor /></el-icon>
+                    <span>{{ device.name }}</span>
+                    <el-tag 
+                      :type="getStatusType(device.status)" 
+                      size="small"
+                      style="margin-left: 8px"
+                    >
+                      {{ device.status }}
+                    </el-tag>
+                  </div>
+                  <div class="device-location">
+                    <el-text size="small" type="info">
+                      {{ device.room || '未设置房间' }} - {{ device.location || '未设置位置' }}
+                    </el-text>
+                  </div>
+                </div>
               </div>
             </div>
           </el-card>
@@ -262,6 +278,16 @@ const loadDevices = async () => {
   }
 }
 
+const getStatusType = (status) => {
+  const types = {
+    ONLINE: 'success',
+    OFFLINE: 'info',
+    ERROR: 'danger',
+    DISABLED: 'warning'
+  }
+  return types[status] || 'info'
+}
+
 const addTrigger = () => {
   scene.value.triggers.push({
     type: 'MANUAL',
@@ -379,8 +405,7 @@ onMounted(() => {
 
 .device-item {
   display: flex;
-  align-items: center;
-  gap: 8px;
+  flex-direction: column;
   padding: 10px;
   margin: 5px 0;
   background: #f5f5f5;
@@ -391,6 +416,22 @@ onMounted(() => {
 
 .device-item:hover {
   background: #e0e0e0;
+}
+
+.device-info {
+  width: 100%;
+}
+
+.device-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+  font-weight: 500;
+}
+
+.device-location {
+  margin-left: 24px;
 }
 
 .designer-canvas {

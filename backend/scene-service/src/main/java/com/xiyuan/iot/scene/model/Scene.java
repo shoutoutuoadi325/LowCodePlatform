@@ -34,11 +34,13 @@ public class Scene {
     private SceneStatus status;
     
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
-    @JoinColumn(name = "scene_id")
+    @JoinColumn(name = "scene_fk", nullable = true)
+    @Builder.Default
     private List<Trigger> triggers = new ArrayList<>();
     
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
-    @JoinColumn(name = "scene_id")
+    @JoinColumn(name = "scene_fk", nullable = true)
+    @Builder.Default
     private List<Action> actions = new ArrayList<>();
     
     @Column(nullable = false, updatable = false)
