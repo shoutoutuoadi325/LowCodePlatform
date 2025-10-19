@@ -574,11 +574,15 @@ const formatDate = (dateString) => {
   return dayjs(dateString).format('YYYY-MM-DD HH:mm:ss')
 }
 
-const formatUptime = (minutes) => {
-  if (!minutes) return '-'
-  const hours = Math.floor(minutes / 60)
-  const mins = minutes % 60
-  return `${hours}h ${mins}m`
+const formatUptime = (hours) => {
+  if (!hours) return '-'
+  if (hours < 24) {
+    return `${hours}h`
+  } else {
+    const days = Math.floor(hours / 24)
+    const remainingHours = hours % 24
+    return `${days}d ${remainingHours}h`
+  }
 }
 
 const getSeverityType = (severity) => {

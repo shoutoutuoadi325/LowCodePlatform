@@ -721,7 +721,62 @@ export const systemService = {
       },
       lastUpdated: new Date().toISOString()
     }
-  })
+  }),
+  updateSecurityConfig: (config) => Promise.resolve({ data: { success: true, message: '安全配置已更新' } }),
+  
+  // 日志配置方法
+  getLogsConfig: () => Promise.resolve({
+    data: {
+      level: 'info',
+      retentionDays: 30,
+      maxFileSize: 100,
+      enableAccessLog: true,
+      enableErrorLog: true,
+      enableAuditLog: true,
+      logPath: '/var/log/lowcode-platform',
+      rotationEnabled: true,
+      rotationSize: '10MB',
+      rotationCount: 5,
+      lastUpdated: new Date().toISOString()
+    }
+  }),
+  updateLogsConfig: (config) => Promise.resolve({ data: { success: true, message: '日志配置已更新' } }),
+  
+  // 用户管理方法
+  getUsers: () => Promise.resolve({
+    data: [
+      {
+        id: 1,
+        username: 'admin',
+        email: 'admin@example.com',
+        role: 'admin',
+        status: 'active',
+        lastLogin: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+        createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
+      },
+      {
+        id: 2,
+        username: 'operator',
+        email: 'operator@example.com',
+        role: 'operator',
+        status: 'active',
+        lastLogin: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
+        createdAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString()
+      },
+      {
+        id: 3,
+        username: 'viewer',
+        email: 'viewer@example.com',
+        role: 'viewer',
+        status: 'active',
+        lastLogin: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+        createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
+      }
+    ]
+  }),
+  createUser: (user) => Promise.resolve({ data: { success: true, message: '用户创建成功', id: Date.now() } }),
+  updateUser: (id, user) => Promise.resolve({ data: { success: true, message: '用户更新成功' } }),
+  deleteUser: (id) => Promise.resolve({ data: { success: true, message: '用户删除成功' } })
 }
 
 // 模拟器管理服务
@@ -867,7 +922,8 @@ export const analyticsService = {
       .map(scene => ({
         sceneId: scene.sceneId,
         name: scene.name,
-        executionCount: scene.executionCount,
+        executions: scene.executionCount,
+        successRate: 0.95 + Math.random() * 0.05,
         lastExecuted: scene.lastExecuted,
         isActive: scene.isActive
       }))
@@ -881,50 +937,107 @@ export const analyticsService = {
         deviceId: device.deviceId,
         name: device.name,
         type: device.type,
+        operations: Math.floor(Math.random() * 500) + 50,
         location: device.location,
         lastSeen: device.lastSeen,
-        uptime: Math.floor(Math.random() * 168) + 1 // 随机1-168小时
+        uptime: Math.floor(Math.random() * 168) + 1 // 随机1-168小时，单位：小时
       }))
     
     return Promise.resolve({ data: activeDevices })
   },
-  getDetailedReport: (timeRange = '24h') => {
-    const report = {
-      summary: {
-        totalDevices: mockDevices.length,
-        onlineDevices: mockDevices.filter(d => d.status === 'online').length,
-        totalScenes: mockScenes.length,
-        activeScenes: mockScenes.filter(s => s.isActive).length,
-        totalExecutions: mockScenes.reduce((sum, scene) => sum + scene.executionCount, 0),
-        avgExecutionTime: 2500 + Math.random() * 1000
-      },
-      deviceMetrics: mockDevices.map(device => ({
-        deviceId: device.deviceId,
-        name: device.name,
-        type: device.type,
-        status: device.status,
-        uptime: device.status === 'online' ? Math.floor(Math.random() * 168) + 1 : 0,
-        errorCount: Math.floor(Math.random() * 5),
-        lastMaintenance: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString()
-      })),
-      sceneMetrics: mockScenes.map(scene => ({
-        sceneId: scene.sceneId,
-        name: scene.name,
-        executionCount: scene.executionCount,
-        successRate: 95 + Math.random() * 5,
-        avgExecutionTime: 1000 + Math.random() * 3000,
-        lastExecuted: scene.lastExecuted
-      })),
-      systemHealth: {
-        cpuUsage: 15 + Math.random() * 20,
-        memoryUsage: 45 + Math.random() * 30,
-        diskUsage: 25 + Math.random() * 40,
-        networkLatency: 10 + Math.random() * 50
-      },
-      generatedAt: new Date().toISOString()
+  getDetailedReport: (params = {}) => {
+    const { type = 'device-usage' } = params
+    let reportData = []
+    
+    switch (type) {
+      case 'device-usage':
+        reportData = mockDevices.map(device => ({
+          deviceName: device.name,
+          deviceType: device.type,
+          totalOperations: Math.floor(Math.random() * 1000) + 100,
+          avgResponseTime: Math.floor(Math.random() * 500) + 50,
+          uptime: device.status === 'online' ? `${Math.floor(Math.random() * 168) + 1}h` : '0h',
+          lastActive: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString()
+        }))
+        break
+      case 'scene-execution':
+        reportData = mockScenes.map(scene => ({
+          sceneName: scene.name,
+          totalExecutions: scene.executionCount,
+          successCount: Math.floor(scene.executionCount * (0.95 + Math.random() * 0.05)),
+          failureCount: Math.floor(scene.executionCount * Math.random() * 0.05),
+          successRate: 0.95 + Math.random() * 0.05,
+          avgExecutionTime: Math.floor(Math.random() * 3000) + 1000,
+          lastExecution: scene.lastExecuted
+        }))
+        break
+      case 'system-performance':
+        reportData = Array.from({ length: 24 }, (_, i) => ({
+          timestamp: new Date(Date.now() - (23 - i) * 60 * 60 * 1000).toISOString(),
+          cpuUsage: Math.floor(Math.random() * 50) + 10,
+          memoryUsage: Math.floor(Math.random() * 40) + 30,
+          diskUsage: Math.floor(Math.random() * 30) + 20,
+          networkIn: Math.floor(Math.random() * 100) + 10,
+          networkOut: Math.floor(Math.random() * 80) + 5
+        }))
+        break
+      case 'error-statistics':
+        reportData = [
+          {
+            errorType: '设备连接超时',
+            errorMessage: 'Device connection timeout',
+            count: Math.floor(Math.random() * 20) + 5,
+            firstOccurrence: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+            lastOccurrence: new Date(Date.now() - Math.random() * 24 * 60 * 60 * 1000).toISOString(),
+            severity: 'medium'
+          },
+          {
+            errorType: '场景执行失败',
+            errorMessage: 'Scene execution failed',
+            count: Math.floor(Math.random() * 15) + 2,
+            firstOccurrence: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+            lastOccurrence: new Date(Date.now() - Math.random() * 12 * 60 * 60 * 1000).toISOString(),
+            severity: 'high'
+          },
+          {
+            errorType: '网络异常',
+            errorMessage: 'Network anomaly detected',
+            count: Math.floor(Math.random() * 10) + 1,
+            firstOccurrence: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+            lastOccurrence: new Date(Date.now() - Math.random() * 6 * 60 * 60 * 1000).toISOString(),
+            severity: 'low'
+          }
+        ]
+        break
+      default:
+        reportData = []
     }
     
-    return Promise.resolve({ data: report })
+    return Promise.resolve({ data: reportData })
+  },
+  getSceneStatistics: () => {
+    const totalScenes = mockScenes.length
+    const activeScenes = mockScenes.filter(s => s.isActive).length
+    const totalExecutions = mockScenes.reduce((sum, scene) => sum + scene.executionCount, 0)
+    
+    return Promise.resolve({
+      data: {
+        total: totalScenes,
+        executions: totalExecutions,
+        change: '+' + Math.floor(Math.random() * 10),
+        changeType: 'positive',
+        executionChange: '+' + Math.floor(Math.random() * 50),
+        executionChangeType: 'positive',
+        lastUpdated: new Date().toISOString()
+      }
+    })
+  },
+  exportReport: (params = {}) => {
+    // 模拟导出功能，返回一个简单的 CSV 格式数据
+    const csvContent = 'Name,Type,Value\nSample Data,Export,123\nTest Data,Report,456'
+    const blob = new Blob([csvContent], { type: 'text/csv' })
+    
+    return Promise.resolve({ data: blob })
   }
 }
 
