@@ -4,27 +4,43 @@ server:
 spring:
   application:
     name: scene-service
+  
+  # Azure SQL Server 数据源配置
   datasource:
-    url: jdbc:h2:mem:scenedb
-    driver-class-name: org.h2.Driver
-    username: sa
-    password: 
+    url: jdbc:sqlserver://${DB_HOST:shoutoutuoadi325.database.windows.net}:${DB_PORT:1433};databaseName=${DB_NAME:scenedb};encrypt=true;trustServerCertificate=false;hostNameInCertificate=*.database.windows.net;loginTimeout=30;
+    username: ${DB_USERNAME:shoutoutuoadi325}
+    password: ${DB_PASSWORD:1QAZ0plm@}
+    driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
+    
+    # HikariCP 连接池配置
+    hikari:
+      maximum-pool-size: 15
+      minimum-idle: 3
+      idle-timeout: 300000
+      connection-timeout: 20000
+      max-lifetime: 1200000
+      pool-name: SceneServiceHikariCP
+      
+  # JPA 配置
   jpa:
     hibernate:
       ddl-auto: update
-    show-sql: true
+      naming:
+        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+    show-sql: false
     properties:
       hibernate:
+        dialect: org.hibernate.dialect.SQLServerDialect
         format_sql: true
-  h2:
-    console:
-      enabled: true
-      path: /h2-console
+        jdbc:
+          batch_size: 15
 
+# 设备服务配置
 device:
   service:
-    url: http://localhost:8081
+    url: ${DEVICE_SERVICE_URL:http://localhost:8081}
 
+# 服务发现配置
 eureka:
   client:
     enabled: false
@@ -33,6 +49,9 @@ eureka:
   instance:
     prefer-ip-address: true
 
+# 日志配置
 logging:
   level:
-    com.xiyuan.iot: DEBUG
+    com.xiyuan.iot: INFO
+    org.hibernate.SQL: DEBUG
+    com.microsoft.sqlserver: INFO

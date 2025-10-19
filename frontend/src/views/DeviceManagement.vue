@@ -163,10 +163,13 @@ const loadDevices = async () => {
   loading.value = true
   try {
     const response = await deviceService.getAll()
-    devices.value = response.data
+    // 确保response.data是数组
+    devices.value = Array.isArray(response.data) ? response.data : []
   } catch (error) {
     console.error('Failed to load devices:', error)
     ElMessage.error('加载设备列表失败')
+    // 确保在错误情况下也设置为空数组
+    devices.value = []
   } finally {
     loading.value = false
   }

@@ -4,8 +4,8 @@ import com.xiyuan.iot.device.model.Device;
 import com.xiyuan.iot.device.model.DeviceStatus;
 import com.xiyuan.iot.device.mqtt.MqttGatewayService;
 import com.xiyuan.iot.device.repository.DeviceRepository;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,12 +14,17 @@ import java.util.Map;
 import java.util.UUID;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class DeviceService {
     
     private final DeviceRepository deviceRepository;
-    private final MqttGatewayService mqttGatewayService;
+    
+    @Autowired(required = false)
+    private MqttGatewayService mqttGatewayService;
+    
+    public DeviceService(DeviceRepository deviceRepository) {
+        this.deviceRepository = deviceRepository;
+    }
     
     @Transactional
     public Device createDevice(Device device) {
@@ -83,7 +88,12 @@ public class DeviceService {
         }
         
         // 通过MQTT发送命令到设备
-        return mqttGatewayService.sendCommand(deviceId, action, parameters);
+        if (mqttGatewayService != null) {
+            return mqttGatewayService.sendCommand(deviceId, action, parameters);
+        } else {
+            log.warn("MQTT service is disabled, cannot send command to device {}", deviceId);
+            return false;
+        }
     }
     
     /**

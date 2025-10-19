@@ -37,7 +37,14 @@ public class DeviceTypeModelService {
      * 获取所有设备类型模型
      */
     public List<DeviceTypeModel> getAllDeviceTypeModels() {
-        return deviceTypeModelRepository.findAll();
+        try {
+            List<DeviceTypeModel> models = deviceTypeModelRepository.findAll();
+            log.info("Found {} device type models", models.size());
+            return models;
+        } catch (Exception e) {
+            log.error("Error getting all device type models", e);
+            throw new RuntimeException("Failed to get device type models", e);
+        }
     }
     
     /**

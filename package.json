@@ -1,0 +1,27 @@
+{
+  "name": "lowcodeplatform",
+  "version": "1.0.0",
+  "description": "IoT Low Code Platform with mock data generation and testing utilities",
+  "main": "index.js",
+  "scripts": {
+    "start": "node scripts/quick-start.js",
+    "generate-data": "node scripts/generate-test-data.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "iot",
+    "lowcode",
+    "platform",
+    "testing",
+    "mock-data"
+  ],
+  "author": "LowCodePlatform Team",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^1.6.0"
+  },
+  "devDependencies": {},
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}

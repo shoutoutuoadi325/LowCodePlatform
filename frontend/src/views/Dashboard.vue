@@ -141,17 +141,28 @@ const loadData = async () => {
       sceneService.getActive()
     ])
     
-    const devices = devicesRes.data
+    // 确保所有数据都是数组
+    const devices = Array.isArray(devicesRes.data) ? devicesRes.data : []
+    const scenes = Array.isArray(scenesRes.data) ? scenesRes.data : []
+    const activeScenesList = Array.isArray(activeScenesRes.data) ? activeScenesRes.data : []
+    
     deviceCount.value = devices.length
     onlineDevices.value = devices.filter(d => d.status === 'ONLINE').length
     recentDevices.value = devices.slice(-5).reverse()
     
-    sceneCount.value = scenesRes.data.length
-    activeScenes.value = activeScenesRes.data.length
-    quickScenes.value = activeScenesRes.data.slice(0, 6)
+    sceneCount.value = scenes.length
+    activeScenes.value = activeScenesList.length
+    quickScenes.value = activeScenesList.slice(0, 6)
   } catch (error) {
     console.error('Failed to load dashboard data:', error)
     ElMessage.error('加载数据失败')
+    // 确保在错误情况下也设置默认值
+    deviceCount.value = 0
+    onlineDevices.value = 0
+    sceneCount.value = 0
+    activeScenes.value = 0
+    recentDevices.value = []
+    quickScenes.value = []
   }
 }
 

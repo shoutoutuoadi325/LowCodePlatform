@@ -19,6 +19,14 @@
                 <el-icon><Monitor /></el-icon>
                 <span>设备管理</span>
               </el-menu-item>
+              <el-menu-item index="/device-types">
+                <el-icon><Grid /></el-icon>
+                <span>设备类型</span>
+              </el-menu-item>
+              <el-menu-item index="/device-monitor">
+                <el-icon><DataLine /></el-icon>
+                <span>设备监控</span>
+              </el-menu-item>
               <el-menu-item index="/scenes">
                 <el-icon><Switch /></el-icon>
                 <span>场景管理</span>
@@ -26,6 +34,18 @@
               <el-menu-item index="/scene-designer">
                 <el-icon><MagicStick /></el-icon>
                 <span>场景编排</span>
+              </el-menu-item>
+              <el-menu-item index="/data-analysis">
+                <el-icon><TrendCharts /></el-icon>
+                <span>数据分析</span>
+              </el-menu-item>
+              <el-menu-item index="/system-config">
+                <el-icon><Setting /></el-icon>
+                <span>系统配置</span>
+              </el-menu-item>
+              <el-menu-item index="/simulator-management">
+                <el-icon><Cpu /></el-icon>
+                <span>模拟器管理</span>
               </el-menu-item>
             </el-menu>
           </div>

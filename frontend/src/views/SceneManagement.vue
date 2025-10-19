@@ -88,10 +88,13 @@ const loadScenes = async () => {
   loading.value = true
   try {
     const response = await sceneService.getAll()
-    scenes.value = response.data
+    // 确保response.data是数组
+    scenes.value = Array.isArray(response.data) ? response.data : []
   } catch (error) {
     console.error('Failed to load scenes:', error)
     ElMessage.error('加载场景列表失败')
+    // 确保在错误情况下也设置为空数组
+    scenes.value = []
   } finally {
     loading.value = false
   }

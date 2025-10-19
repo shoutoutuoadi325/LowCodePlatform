@@ -1,0 +1,47 @@
+spring:
+  datasource:
+    url: jdbc:sqlserver://${DB_HOST:shoutoutuoadi325.database.windows.net}:${DB_PORT:1433};databaseName=${DB_NAME:devicedb};encrypt=true;trustServerCertificate=false;hostNameInCertificate=*.database.windows.net;loginTimeout=30;
+    username: ${DB_USERNAME:shoutoutuoadi325}
+    password: ${DB_PASSWORD:1QAZ0plm@}
+    driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
+    hikari:
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+      maximum-pool-size: 10
+      minimum-idle: 5
+      pool-name: DeviceServiceHikariCP
+      
+  jpa:
+    database-platform: org.hibernate.dialect.SQLServerDialect
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.SQLServerDialect
+        format_sql: true
+        show_sql: false
+    sql:
+      init:
+        mode: always
+        
+  sql:
+    init:
+      platform: sqlserver
+      
+logging:
+  level:
+    com.iot.device: INFO
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    com.zaxxer.hikari: DEBUG
+    
+server:
+  port: 8081
+  
+mqtt:
+  broker:
+    url: tcp://mqtt-broker:1883
+    client-id: device-service
+    username: ""
+    password: ""

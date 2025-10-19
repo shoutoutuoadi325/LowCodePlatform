@@ -23,8 +23,14 @@ services:
     environment:
       - SPRING_PROFILES_ACTIVE=prod
       - MQTT_BROKER_URL=tcp://mosquitto:1883
+      - DB_HOST=shoutoutuoadi325.database.windows.net
+      - DB_PORT=1433
+      - DB_NAME=devicedb
+      - DB_USERNAME=shoutoutuoadi325
+      - DB_PASSWORD=1QAZ0plm@
     depends_on:
-      - mosquitto
+      mosquitto:
+        condition: service_started
     networks:
       - iot-network
     restart: unless-stopped
@@ -38,8 +44,14 @@ services:
     environment:
       - SPRING_PROFILES_ACTIVE=prod
       - DEVICE_SERVICE_URL=http://device-service:8081
+      - DB_HOST=shoutoutuoadi325.database.windows.net
+      - DB_PORT=1433
+      - DB_NAME=scenedb
+      - DB_USERNAME=shoutoutuoadi325
+      - DB_PASSWORD=1QAZ0plm@
     depends_on:
-      - device-service
+      device-service:
+        condition: service_started
     networks:
       - iot-network
     restart: unless-stopped

@@ -33,6 +33,14 @@ public class DeviceTypeModelController {
     }
     
     /**
+     * 测试端点
+     */
+    @GetMapping("/test")
+    public ResponseEntity<String> test() {
+        return ResponseEntity.ok("DeviceTypeModelController is working!");
+    }
+    
+    /**
      * 获取所有设备类型
      */
     @GetMapping
