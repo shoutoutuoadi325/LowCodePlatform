@@ -109,8 +109,18 @@
             <el-radio label="turn_on">开启</el-radio>
             <el-radio label="turn_off">关闭</el-radio>
             <el-radio label="set_state">设置状态</el-radio>
+            <el-radio label="change_status">修改设备状态</el-radio>
           </el-radio-group>
         </el-form-item>
+        <template v-if="controlAction === 'change_status'">
+          <el-form-item label="设置状态">
+            <el-select v-model="deviceStatusChange" placeholder="选择设备状态">
+              <el-option label="在线" value="ONLINE" />
+              <el-option label="离线" value="OFFLINE" />
+              <el-option label="禁用" value="DISABLED" />
+            </el-select>
+          </el-form-item>
+        </template>
         <template v-if="controlAction === 'set_state'">
           <el-form-item v-if="currentDevice?.type === 'LIGHT'" label="亮度">
             <el-slider v-model="lightBrightness" :min="0" :max="100" />
@@ -184,6 +194,7 @@ const controlAction = ref('turn_on')
 const controlParams = ref('')
 const lightBrightness = ref(100)
 const lightColor = ref('#FFFFFF')
+const deviceStatusChange = ref('ONLINE')
 
 const editingDevice = ref({
   id: null,
@@ -202,7 +213,7 @@ const newDevice = ref({
   floor: '',
   room: '',
   location: '',
-  status: 'OFFLINE'
+  status: 'ONLINE'
 })
 
 const getStatusType = (status) => {
@@ -240,7 +251,7 @@ const addDevice = async () => {
       floor: '',
       room: '',
       location: '',
-      status: 'OFFLINE'
+      status: 'ONLINE'
     }
     loadDevices()
   } catch (error) {
@@ -285,6 +296,7 @@ const controlDevice = (device) => {
   controlParams.value = ''
   lightBrightness.value = 100
   lightColor.value = '#FFFFFF'
+  deviceStatusChange.value = device.status || 'ONLINE'
   showControlDialog.value = true
 }
 
@@ -318,6 +330,51 @@ const saveEdit = async () => {
 
 const executeControl = async () => {
   try {
+    // Handle device status change
+    if (controlAction.value === 'change_status') {
+      const updateData = {
+        ...currentDevice.value,
+        status: deviceStatusChange.value
+      }
+      await deviceService.update(currentDevice.value.id, updateData)
+      ElMessage.success('设备状态更新成功')
+      showControlDialog.value = false
+      loadDevices()
+      return
+    }
+
+    // Helper to safely parse parameters entered by user
+    const safeParseParams = (text) => {
+      if (!text || !text.trim()) return {}
+      try {
+        return JSON.parse(text)
+      } catch (e) {
+        // Try to be lenient: allow single quotes and missing curly braces
+        try {
+          const normalized = (() => {
+            let t = text.trim()
+            // Remove surrounding parentheses if user typed ( ... )
+            if (t.startsWith('(') && t.endsWith(')')) {
+              t = t.slice(1, -1)
+            }
+            // Add curly braces if user wrote key:value without {}
+            if (!t.startsWith('{') && !t.endsWith('}')) {
+              t = `{${t}}`
+            }
+            // Replace single quotes with double quotes for JSON compatibility
+            t = t
+              .replace(/[‘’]/g, "'")
+              .replace(/[“”]/g, '"')
+              .replace(/'/g, '"')
+            return t
+          })()
+          return JSON.parse(normalized)
+        } catch (e2) {
+          return null
+        }
+      }
+    }
+
     let parameters = {}
     if (controlAction.value === 'set_state') {
       if (currentDevice.value?.type === 'LIGHT') {
@@ -326,16 +383,27 @@ const executeControl = async () => {
           color: lightColor.value
         }
       } else if (controlParams.value) {
-        parameters = JSON.parse(controlParams.value)
+        const parsed = safeParseParams(controlParams.value)
+        if (parsed === null) {
+          ElMessage.error('参数格式错误：请输入有效的 JSON，如 {"temperature": 22}')
+          return
+        }
+        parameters = parsed
       }
     }
-    
-    await deviceService.control(
+
+    const resp = await deviceService.control(
       currentDevice.value.deviceId,
       controlAction.value,
       parameters
     )
-    
+
+    const ok = resp?.data?.success !== false
+    if (!ok) {
+      ElMessage.error('设备拒绝控制：设备离线/禁用或指令无效')
+      return
+    }
+
     ElMessage.success('控制命令执行成功')
     showControlDialog.value = false
     
