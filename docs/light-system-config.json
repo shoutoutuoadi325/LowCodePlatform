@@ -1,0 +1,465 @@
+{
+  "system": {
+    "classes": {
+      "Device": {
+        "description": "所有IoT设备的基类（祖父类）",
+        "type": "abstract",
+        "attributes": {
+          "id": "string",
+          "deviceId": "string",
+          "name": "string",
+          "type": "string",
+          "status": "string",
+          "location": "string",
+          "building": "string",
+          "floor": "string",
+          "room": "string",
+          "lastUpdate": "string",
+          "isOnline": "bool",
+          "metadata": "object"
+        },
+        "operations": [
+          "initialize()",
+          "shutdown()",
+          "get_status() -> string",
+          "update_location(location: object)",
+          "ping() -> bool"
+        ]
+      },
+      "Actuator": {
+        "description": "执行器设备父类，继承自Device",
+        "type": "abstract",
+        "extends": "Device",
+        "attributes": {
+          "power": "string",
+          "powerConsumption": "float",
+          "isControllable": "bool"
+        },
+        "operations": [
+          "turn_on()",
+          "turn_off()",
+          "toggle()",
+          "get_power_state() -> string",
+          "get_power_consumption() -> float"
+        ]
+      },
+      "Sensor": {
+        "description": "传感器设备父类，继承自Device",
+        "type": "abstract",
+        "extends": "Device",
+        "attributes": {
+          "sensitivity": "int",
+          "samplingRate": "int",
+          "lastTriggered": "string",
+          "calibrationDate": "string"
+        },
+        "operations": [
+          "read_value() -> object",
+          "set_sensitivity(level: int)",
+          "calibrate()",
+          "reset()",
+          "get_history(duration: int) -> array"
+        ]
+      },
+      "Light": {
+        "description": "智能灯光设备，继承自Actuator",
+        "extends": "Actuator",
+        "attributes": {
+          "brightness": "int",
+          "color": "string",
+          "colorTemperature": "int",
+          "isDimmable": "bool",
+          "supportsColor": "bool"
+        },
+        "operations": [
+          "set_brightness(level: int)",
+          "set_color(color: string)",
+          "set_color_temperature(temp: int)",
+          "get_state() -> object"
+        ]
+      },
+      "MotionSensor": {
+        "description": "人体感应传感器，继承自Sensor",
+        "extends": "Sensor",
+        "attributes": {
+          "motion": "bool",
+          "detectionRange": "float",
+          "detectionAngle": "int"
+        },
+        "operations": [
+          "detect_motion() -> bool",
+          "get_detection_zone() -> object"
+        ]
+      },
+      "Controller": {
+        "description": "设备控制器基类",
+        "type": "abstract",
+        "attributes": {
+          "id": "string",
+          "name": "string",
+          "controlledDevices": "array",
+          "isMaster": "bool",
+          "strategy": "string"
+        },
+        "operations": [
+          "add_device(device_id: string)",
+          "remove_device(device_id: string)",
+          "control_all(action: string, parameters: object)",
+          "get_all_states() -> array"
+        ]
+      },
+      "LightController": {
+        "description": "灯光控制器，继承自Controller",
+        "extends": "Controller",
+        "attributes": {
+          "controlled_lights": "array",
+          "groupBrightness": "int",
+          "groupColor": "string"
+        },
+        "operations": [
+          "add_light(light_id: string)",
+          "remove_light(light_id: string)",
+          "set_group_brightness(level: int)",
+          "set_group_color(color: string)"
+        ]
+      },
+      "Scheduler": {
+        "description": "调度器基类",
+        "type": "abstract",
+        "attributes": {
+          "id": "string",
+          "name": "string",
+          "schedules": "array",
+          "isActive": "bool",
+          "timezone": "string"
+        },
+        "operations": [
+          "add_schedule(schedule: object)",
+          "remove_schedule(schedule_id: string)",
+          "enable()",
+          "disable()",
+          "execute_schedule(schedule_id: string)"
+        ]
+      },
+      "LightScheduler": {
+        "description": "灯光定时调度器，继承自Scheduler",
+        "extends": "Scheduler",
+        "attributes": {
+          "targetController": "string",
+          "defaultBrightness": "int"
+        },
+        "operations": [
+          "set_target_controller(controller_id: string)"
+        ]
+      }
+    },
+    "class_hierarchy": {
+      "Device": {
+        "children": ["Actuator", "Sensor"]
+      },
+      "Actuator": {
+        "parent": "Device",
+        "children": ["Light"]
+      },
+      "Sensor": {
+        "parent": "Device",
+        "children": ["MotionSensor"]
+      },
+      "Light": {
+        "parent": "Actuator",
+        "grandparent": "Device"
+      },
+      "MotionSensor": {
+        "parent": "Sensor",
+        "grandparent": "Device"
+      },
+      "Controller": {
+        "children": ["LightController"]
+      },
+      "LightController": {
+        "parent": "Controller"
+      },
+      "Scheduler": {
+        "children": ["LightScheduler"]
+      },
+      "LightScheduler": {
+        "parent": "Scheduler"
+      }
+    },
+    "instances": {
+      "lights": [
+        {
+          "id": "light1",
+          "deviceId": "classroom-light-front",
+          "name": "教室前排灯光",
+          "type": "Light",
+          "status": "ready",
+          "power": "off",
+          "brightness": 100,
+          "color": "#FFFFFF",
+          "colorTemperature": 4000,
+          "isDimmable": true,
+          "supportsColor": true,
+          "location": "理科楼301教室前排",
+          "building": "理科楼",
+          "floor": "3F",
+          "room": "301教室",
+          "isOnline": true,
+          "powerConsumption": 0.0
+        },
+        {
+          "id": "light2",
+          "deviceId": "classroom-light-middle",
+          "name": "教室中排灯光",
+          "type": "Light",
+          "status": "ready",
+          "power": "off",
+          "brightness": 100,
+          "color": "#FFFFFF",
+          "colorTemperature": 4000,
+          "isDimmable": true,
+          "supportsColor": true,
+          "location": "理科楼301教室中排",
+          "building": "理科楼",
+          "floor": "3F",
+          "room": "301教室",
+          "isOnline": true,
+          "powerConsumption": 0.0
+        },
+        {
+          "id": "light3",
+          "deviceId": "classroom-light-back",
+          "name": "教室后排灯光",
+          "type": "Light",
+          "status": "ready",
+          "power": "off",
+          "brightness": 100,
+          "color": "#FFFFFF",
+          "colorTemperature": 4000,
+          "isDimmable": true,
+          "supportsColor": true,
+          "location": "理科楼301教室后排",
+          "building": "理科楼",
+          "floor": "3F",
+          "room": "301教室",
+          "isOnline": true,
+          "powerConsumption": 0.0
+        },
+        {
+          "id": "light4",
+          "deviceId": "hallway-light-1",
+          "name": "走廊灯光1",
+          "type": "Light",
+          "status": "ready",
+          "power": "off",
+          "brightness": 80,
+          "color": "#FFFFFF",
+          "colorTemperature": 3500,
+          "isDimmable": true,
+          "supportsColor": false,
+          "location": "理科楼3F走廊东侧",
+          "building": "理科楼",
+          "floor": "3F",
+          "room": "走廊",
+          "isOnline": true,
+          "powerConsumption": 0.0
+        }
+      ],
+      "controllers": [
+        {
+          "id": "controller1",
+          "name": "301教室总控",
+          "type": "LightController",
+          "controlled_lights": ["light1", "light2", "light3"],
+          "controlledDevices": ["light1", "light2", "light3"],
+          "is_master": true,
+          "isMaster": true,
+          "strategy": "synchronized",
+          "groupBrightness": 100,
+          "groupColor": "#FFFFFF"
+        },
+        {
+          "id": "controller2",
+          "name": "走廊控制器",
+          "type": "LightController",
+          "controlled_lights": ["light4"],
+          "controlledDevices": ["light4"],
+          "is_master": false,
+          "isMaster": false,
+          "strategy": "individual",
+          "groupBrightness": 80,
+          "groupColor": "#FFFFFF"
+        }
+      ],
+      "motion_sensors": [
+        {
+          "id": "sensor1",
+          "deviceId": "motion-sensor-301",
+          "name": "教室人体感应",
+          "type": "MotionSensor",
+          "status": "active",
+          "motion": false,
+          "sensitivity": 80,
+          "samplingRate": 1,
+          "detectionRange": 5.0,
+          "detectionAngle": 120,
+          "location": "理科楼301教室门口上方",
+          "building": "理科楼",
+          "floor": "3F",
+          "room": "301教室",
+          "isOnline": true,
+          "lastTriggered": null,
+          "calibrationDate": "2024-01-01"
+        },
+        {
+          "id": "sensor2",
+          "deviceId": "motion-sensor-hallway",
+          "name": "走廊人体感应",
+          "type": "MotionSensor",
+          "status": "active",
+          "motion": false,
+          "sensitivity": 70,
+          "samplingRate": 2,
+          "detectionRange": 8.0,
+          "detectionAngle": 180,
+          "location": "理科楼3F走廊",
+          "building": "理科楼",
+          "floor": "3F",
+          "room": "走廊",
+          "isOnline": true,
+          "lastTriggered": null,
+          "calibrationDate": "2024-01-01"
+        }
+      ],
+      "schedulers": [
+        {
+          "id": "scheduler1",
+          "name": "教室上课模式调度",
+          "type": "LightScheduler",
+          "schedules": [
+            {
+              "time": "08:00",
+              "action": "turn_on_all",
+              "brightness": 100
+            },
+            {
+              "time": "17:30",
+              "action": "turn_off_all"
+            }
+          ],
+          "is_active": true,
+          "isActive": true,
+          "timezone": "Asia/Shanghai",
+          "target_controller": "controller1",
+          "targetController": "controller1",
+          "defaultBrightness": 100
+        }
+      ]
+    },
+    "connections": [
+      {
+        "source": "sensor1",
+        "target": "controller1",
+        "trigger_type": "motion_detected",
+        "action": "turn_on_all",
+        "parameters": {
+          "brightness": 100
+        }
+      },
+      {
+        "source": "sensor2",
+        "target": "controller2",
+        "trigger_type": "motion_detected",
+        "action": "turn_on_all",
+        "parameters": {
+          "brightness": 80
+        }
+      },
+      {
+        "source": "scheduler1",
+        "target": "controller1",
+        "trigger_type": "time_based",
+        "action": "execute_schedule"
+      }
+    ],
+    "automation_rules": [
+      {
+        "id": "rule1",
+        "name": "人体感应自动开灯",
+        "description": "检测到人体移动时自动开启灯光",
+        "enabled": true,
+        "conditions": [
+          {
+            "sensor": "sensor1",
+            "property": "motion",
+            "operator": "equals",
+            "value": true
+          }
+        ],
+        "actions": [
+          {
+            "controller": "controller1",
+            "operation": "control_all",
+            "parameters": {
+              "action": "turn_on",
+              "brightness": 100
+            }
+          }
+        ]
+      },
+      {
+        "id": "rule2",
+        "name": "无人5分钟自动关灯",
+        "description": "5分钟内未检测到人体移动时自动关闭灯光",
+        "enabled": true,
+        "conditions": [
+          {
+            "sensor": "sensor1",
+            "property": "motion",
+            "operator": "equals",
+            "value": false,
+            "duration_seconds": 300
+          }
+        ],
+        "actions": [
+          {
+            "controller": "controller1",
+            "operation": "control_all",
+            "parameters": {
+              "action": "turn_off"
+            }
+          }
+        ]
+      },
+      {
+        "id": "rule3",
+        "name": "夜间模式",
+        "description": "晚上18:00后开灯亮度降低到60%",
+        "enabled": true,
+        "conditions": [
+          {
+            "type": "time_range",
+            "start_time": "18:00",
+            "end_time": "23:59"
+          },
+          {
+            "sensor": "sensor1",
+            "property": "motion",
+            "operator": "equals",
+            "value": true
+          }
+        ],
+        "actions": [
+          {
+            "controller": "controller1",
+            "operation": "control_all",
+            "parameters": {
+              "action": "turn_on",
+              "brightness": 60
+            }
+          }
+        ]
+      }
+    ]
+  }
+}
