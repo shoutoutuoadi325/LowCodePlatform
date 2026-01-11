@@ -1,0 +1,69 @@
+services:
+  device-service:
+    build: 
+      context: ./backend/device-service
+      dockerfile: Dockerfile
+    ports:
+      - "8081:8081"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+    volumes:
+      - device-data:/app/data
+    networks:
+      - iot-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+    
+  scene-service:
+    build: 
+      context: ./backend/scene-service
+      dockerfile: Dockerfile
+    ports:
+      - "8082:8082"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - DEVICE_SERVICE_URL=http://device-service:8081
+    volumes:
+      - scene-data:/app/data
+    depends_on:
+      device-service:
+        condition: service_healthy
+    networks:
+      - iot-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8082/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+    
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "8080:80"
+    depends_on:
+      device-service:
+        condition: service_healthy
+      scene-service:
+        condition: service_healthy
+    networks:
+      - iot-network
+    restart: unless-stopped
+
+networks:
+  iot-network:
+    driver: bridge
+
+volumes:
+  device-data:
+    driver: local
+  scene-data:
+    driver: local
